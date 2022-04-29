@@ -2,6 +2,9 @@ import logging
 import math
 from random import randrange
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from images.image import Image
 
 class Drawable:
 
@@ -33,7 +36,8 @@ class Player(Drawable):
                                int(self.y * self.world.cell_height), 
                                self.width, self.height, 
                                (160, 160, 160))
-                               
+        
+        
         end = int(math.sqrt(self.world.width ** 2 + self.world.height ** 2))
         
         for i in range(output.width // 2):
@@ -42,11 +46,11 @@ class Player(Drawable):
             for t in [p / 100 for p in range(0, end * 100, 1)]:
                 coord_x = self.x + t * math.cos(angle)
                 coord_y = self.y + t * math.sin(angle)
-                    
-                output.draw(coord_x * self.world.cell_width, 
-                            coord_y * self.world.cell_height, 
-                            (160, 160, 160))
-                           
+                
+                output.draw_point(coord_x * self.world.cell_width, 
+                                  coord_y * self.world.cell_height, 
+                                  160, 160, 160)
+                          
                 if not self.world.is_empty(coord_x, coord_y):
                     column_height = int(output.height // t)
                     icolor = int(self.world.scheme[int(coord_x) + int(coord_y) * self.world.width])
@@ -57,25 +61,26 @@ class Player(Drawable):
                 
                     break
     
+    
 
 class Gradient(Drawable):
     
     def __init__(self):
         pass
     
-    def draw(self, output):
+    def draw(self, output: 'Image'):
         for j in range(output.height):
             for i in range(output.width):
                 r = int(255 * j / output.height)
                 g = int(255 * i / output.width)
                 b = 0
                 
-                output.set_color(i, j, r, g, b)
+                output.draw_point(i, j, r, g, b)
                 
                 
 class Map(Drawable):
 
-    def __init__(self, width: int, height: int, map_file: str):
+    def __init__(self, map_file: str):
         self.width, self.height, self.scheme = self._read_map(map_file)
         if len(self.scheme) != self.width * self.height:
             raise AttributeError(f"Scheme dimentions differ from {self.width} * {self.height}")
