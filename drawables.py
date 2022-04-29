@@ -23,7 +23,8 @@ class Player(Drawable):
         self.y = y
         
         # player's view direction
-        self.a = 1.523
+        self.a = math.pi
+        #self.a = 1.523
         self.fov = math.pi / 3
         
         # playes's size

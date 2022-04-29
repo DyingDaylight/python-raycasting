@@ -53,8 +53,6 @@ class PPMImage(Image):
             for j in range(height):
                 coord_x = x + i
                 coord_y = y + j
-                #if coord_x >= width or coord_y >= height:
-                #    continue
                 self.draw_point(coord_x, coord_y, *color)
     
     
@@ -95,6 +93,13 @@ class PPMImage(Image):
     def _unpack_color(self, color: int) -> (int, int, int, int):
         return color >> 0 & 255, color >> 8 & 255, color >> 16 & 255, color >> 24 & 255
         
+    def get_bytes(self):
+        header = f"P6\n{self.width} {self.height}\n255\n"
+        bs = []
+        for i in self.framebuffer:
+            r, g, b, a = self._unpack_color(i)
+            bs.extend([r,g,b])
+        return bytearray(header, 'ascii') + bytes(bs)
         
 
 
