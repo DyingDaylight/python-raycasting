@@ -1,33 +1,46 @@
 import logging
-import struct
 import array
-
-from drawables import Drawable
+import os
 
 
 class PPMImage:
     
-    def __init__(self, width: int, height: int):
+    def __init__(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
-         
-        self.framebuffer = array.array('B', [255, 255, 0] * self.width * self.height)
+        
+        # array of bytes denoting color components
+        self.framebuffer = array.array('B', [255, 255, 255] * self.width * self.height)
+        
+        # cache coordinates (x, y) -> x + y * width
+        # TODO: check if it is faster
         self.cache = {}
         for y in range(self.height + 1):
             for x in range(self.width + 1):
                 self.cache[(x, y)] = 3 * int(x) + 3 * int(y) * self.width
         
         
-    def get_bytes(self):
+    def get_bytes(self) -> bytearray:
+        # get bytes for ppm foramt image
         # P6 - a "magic number" for identifying the file type
         # 255 - a maximum color value
         header = f"P6\n{self.width} {self.height}\n255\n"
         return bytearray(header, 'ascii') + bytes(self.framebuffer)
+        
+        
+    def get_bytes_without_header(self) -> bytearray:
+        # get bytes 
+        print(len(self.framebuffer) % 3)
+        return bytes(self.framebuffer)
+        
+    
+    def flush(self) -> None:
+        self.framebuffer = array.array('B', [255, 255, 255] * self.width * self.height)
     
     
-    def draw_point(self, x: int, y: int, r: int, g: int, b: int) -> None:
+    def draw_point(self, x: int, y: int, color: tuple) -> None:
         index = self.cache[(x, y)]
-        self.framebuffer[index:index + 3] =  array.array('B', [r, g, b])
+        self.framebuffer[index:index + 3] = array.array('B', color)
         
         
     def draw_recatangle(self, x: int, y: int, width: int, height: int, color: tuple) -> None:
@@ -36,22 +49,17 @@ class PPMImage:
             end = self.cache[(x + width, y + j)]
             self.framebuffer[start:end] =  array.array('B', list(color) * width)
     
-
     
-    
-    def flush(self):
-        #self.framebuffer = [self._pack_color(255, 255, 255)] * (self.width * self.height)
-        self.framebuffer = array.array('B', [255, 255, 255] * self.width * self.height)
-               
+    def write_to_file(self, filename: str = "output\output.ppm") -> None:
+        """ Write image to .ppm file """        
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         
-    def drop(self, filename: str) -> None:
-        """ Drop image to .ppm file """        
         if not filename.endswith(".ppm"):
             filename = filename + ".ppm"
         
         with open(filename, "wb") as image:
             image.write(self.get_bytes())
                 
-        logging.debug(f'{filename} is dropped')
+        logging.debug(f'Image is written to {filename}.')
         
         
