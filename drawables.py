@@ -56,11 +56,16 @@ class Player(Drawable):
                           
                 if not self.world.is_empty(coord_x, coord_y):
                     column_height = int(output.height // t)
-                    icolor = int(self.world.scheme[int(coord_x) + int(coord_y) * self.world.width])
+                    
+                    texture_id = int(self.world.scheme[int(coord_x) + int(coord_y) * self.world.width])
+                    
+                    if texture_id >= self.world.texture_count:
+                        raise ValueError(f"Unknown texture id: {texture_id} out of {self.texture_count}")
+                    
                     output.draw_recatangle(output.width // 2 + int(i),
                                            int(output.height // 2 - column_height // 2),
                                            1, column_height,
-                                           (160, 160, 160))
+                                           self.world.pixmap.getpixel((texture_id * self.world.texture_size, 0)))
                 
                     break
     
