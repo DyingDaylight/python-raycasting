@@ -50,8 +50,11 @@ class Player(Drawable):
                 coord_x = self.x + t * math.cos(angle)
                 coord_y = self.y + t * math.sin(angle)
                 
-                output.draw_point(int(coord_x * self.world.cell_width), 
-                                  int(coord_y * self.world.cell_height), 
+                pixel_x = int(coord_x * self.world.cell_width)
+                pixel_y = int(coord_y * self.world.cell_height)
+                
+                output.draw_point(pixel_x, 
+                                  pixel_y, 
                                   160, 160, 160)
                           
                 if not self.world.is_empty(coord_x, coord_y):
@@ -62,12 +65,48 @@ class Player(Drawable):
                     if texture_id >= self.world.texture_count:
                         raise ValueError(f"Unknown texture id: {texture_id} out of {self.texture_count}")
                     
-                    output.draw_recatangle(output.width // 2 + int(i),
-                                           int(output.height // 2 - column_height // 2),
-                                           1, column_height,
-                                           self.world.pixmap.getpixel((texture_id * self.world.texture_size, 0)))
+                    #output.draw_recatangle(output.width // 2 + int(i),
+                    #                       int(output.height // 2 - column_height // 2),
+                    #                       1, column_height,
+                    #                       self.world.pixmap.getpixel((texture_id * self.world.texture_size, 0)))
+                    
+                    hit_x = coord_x - math.floor(coord_x + 0.5) # get fractional part
+                    hit_y = coord_y - math.floor(coord_y + 0.5)
+                    texture_coord_x = hit_x * self.world.texture_size
+                    if abs(hit_y) > abs(hit_x):
+                        texture_coord_x = hit_y * self.world.texture_size
+                    if texture_coord_x < 0: texture_coord_x += self.world.texture_size
+                    if not 0 <= texture_coord_x < int(self.world.texture_size):
+                        raise ValueError(f"Texture coordinate {texture_coord_x} out of range 0 - {self.world.texture_size}")
+                        
+                    column = self.texture_column(texture_id, texture_coord_x, column_height)
+
+                    x = output.width // 2 + int(i)
+                    for j in range(column_height):
+                        y = j + int(output.height // 2 - column_height // 2)
+                        if y < 0 or y > output.height:
+                            continue
+                        output.draw_point(x, y, *column[j])
                 
                     break
+                    
+    def texture_column(self, texture_id, texture_coordinate, column_height):
+        image_width = self.world.texture_size * self.world.texture_count
+        image_height = self.world.texture_size
+        
+        if self.world.pixmap.size[0] * self.world.pixmap.size[1] != image_width * image_height or \
+               texture_id >= self.world.texture_count or \
+               texture_coordinate >= self.world.texture_size:
+            raise ValueError("Cannot get texture column")
+            
+        column = []
+        
+        for y in range(column_height):
+            pixel_x = texture_id * self.world.texture_size + texture_coordinate
+            pixel_y = (y * self.world.texture_size) / column_height
+            column.append(self.world.pixmap.getpixel((pixel_x, int(pixel_y))))
+            
+        return column
     
     
 
