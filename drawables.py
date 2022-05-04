@@ -2,6 +2,8 @@ import logging
 import math
 from random import randrange
 
+from PIL import Image
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from images.image import Image
@@ -24,7 +26,7 @@ class Player(Drawable):
         
         # player's view direction
         self.a = math.pi
-        #self.a = 1.523
+        self.a = 1.523
         self.fov = math.pi / 3
         
         # playes's size
@@ -48,8 +50,8 @@ class Player(Drawable):
                 coord_x = self.x + t * math.cos(angle)
                 coord_y = self.y + t * math.sin(angle)
                 
-                output.draw_point(coord_x * self.world.cell_width, 
-                                  coord_y * self.world.cell_height, 
+                output.draw_point(int(coord_x * self.world.cell_width), 
+                                  int(coord_y * self.world.cell_height), 
                                   160, 160, 160)
                           
                 if not self.world.is_empty(coord_x, coord_y):
@@ -58,7 +60,7 @@ class Player(Drawable):
                     output.draw_recatangle(output.width // 2 + int(i),
                                            int(output.height // 2 - column_height // 2),
                                            1, column_height,
-                                           self.world.colors[icolor])
+                                           (160, 160, 160))
                 
                     break
     
@@ -69,7 +71,7 @@ class Gradient(Drawable):
     def __init__(self):
         pass
     
-    def draw(self, output: 'Image'):
+    def draw(self, output):
         for j in range(output.height):
             for i in range(output.width):
                 r = int(255 * j / output.height)
@@ -82,14 +84,18 @@ class Gradient(Drawable):
 class Map(Drawable):
 
     def __init__(self, map_file: str):
+        logging.debug("Loading map...")
         self.width, self.height, self.scheme = self._read_map(map_file)
         if len(self.scheme) != self.width * self.height:
             raise AttributeError(f"Scheme dimentions differ from {self.width} * {self.height}")
-        self.drawables = []
-        self.colors = []
-        for i in range(10):
-            self.colors.append((randrange(255), randrange(255), randrange(255)))
             
+        logging.debug("Loading textures...")
+        img = Image.open("resourses\walltext.png")
+        self.pixmap = img.convert('RGB')
+        self.texture_size = img.size[1]
+        self.texture_count = img.size[0] / self.texture_size
+        
+        self.drawables = []            
         
         
     def draw(self, output) -> None:
@@ -104,12 +110,17 @@ class Map(Drawable):
                 rectangle_x = x * self.cell_width
                 rectangle_y = y * self.cell_height
                 
-                icolor = int(self.scheme[x + y * self.width])
+                texture_id = int(self.scheme[x + y * self.width])
                 
-                output.draw_recatangle(rectangle_x, rectangle_y, self.cell_width, self.cell_height, self.colors[icolor])
+                if texture_id >= self.texture_count:
+                    raise ValueError(f"Unknown texture id: {texture_id} out of {self.texture_count}")
+                
+                output.draw_recatangle(rectangle_x, rectangle_y, 
+                                       self.cell_width, self.cell_height, 
+                                       self.pixmap.getpixel((texture_id * self.texture_size, 0)))
                 
         for drawable in self.drawables:
-            output.render(drawable)
+            drawable.draw(output)
         
         
     def add(self, obj: Drawable) -> None:

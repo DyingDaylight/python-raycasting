@@ -7,6 +7,8 @@ import array
 
 from random import randrange
 
+
+
 from PySide6.QtCore import Qt, QPoint, QTimer, QRunnable, QThreadPool, QByteArray
 from PySide6.QtWidgets import QApplication, QLabel, QMainWindow
 from PySide6.QtGui import QPixmap, QPainter, QColor
@@ -52,6 +54,10 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         self.is_open = False
         
+        
+def load_texture():
+    pass
+        
 
 def main():
     parser = argparse.ArgumentParser(description="Ray casting implemention in Python.")
@@ -64,7 +70,7 @@ def main():
     height = 512
     
     world = Map("map.txt")
-    
+       
     player = Player(3.456, 2.345)
     world.add(player)
     
@@ -75,8 +81,14 @@ def main():
         logging.debug("Run in batch")    
         
     output = PPMImage(width, height)
-    output.render(Gradient())
-    output.render(world)
+    #output.draw_recatangle(0,0,10,10,(255,0,0))
+    #Gradient().draw(output)
+    world.draw(output)
+    output.drop("output.ppm")
+    
+    
+    """
+    #output.render(world)
     
     def run():
         def update_label(dt):
@@ -120,8 +132,7 @@ def main():
     else:
         output.drop("output.ppm")
 
-    
-    """        
+           
     for frame in range(10):
         name = f"output/frame{frame}"
         player.a += 2 * math.pi / 360
@@ -129,8 +140,8 @@ def main():
         output.render(world)
         output.render(player)
         output.drop(name)
+
     """
-    
     
 if __name__ == "__main__":
     main()
