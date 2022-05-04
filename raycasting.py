@@ -58,7 +58,7 @@ def render(buffer, world, player, draw_map=True):
                       
             if not world.is_empty(int(coord_x), int(coord_y)):
                 # visible column height depending on the distance
-                column_height = int(buffer.height // t)
+                column_height = int(buffer.height // (t * math.cos(angle - player.a)))
                 
                 texture_id = world.get_texture_id(int(coord_x), int(coord_y))
                 
