@@ -88,11 +88,31 @@ def render(buffer, world, player, sprites, draw_map=True):
             
                 break
                 
-    if draw_map:
-        for sprite in sprites:
-            logging.debug(f"Sprite: {sprite}")
+    for sprite in sprites:
+        logging.debug(f"Sprite: {sprite}")
+        if draw_map:
+            # draw sprite on mini map
             buffer.draw_recatangle(int(sprite.x * cell_width - sprite.width // 2), int(sprite.y * cell_height - sprite.height // 2),
                                    sprite.width, sprite.height, (255, 0, 0))
+
+        # absolute direction from the player to the sprite
+        sprite_direction = math.atan2(sprite.y - player.y, sprite.x - player.x)
+        while sprite_direction - player.a >  math.pi: sprite_direction -= 2 * math.pi
+        while sprite_direction - player.a < -math.pi: sprite_direction += 2 * math.pi
+        
+        sprite_distance = math.sqrt(pow(player.x - sprite.x, 2) + pow(player.y - sprite.y, 2))
+        sprite_screen_size = int(min(2000, buffer.height // sprite_distance))
+        h_offest = (sprite_direction - player.a) * working_width // player.fov + working_width // 2 - sprite_screen_size // 2
+        v_offset = buffer.height // 2 - sprite_screen_size // 2
+        
+        for i in range(sprite_screen_size):
+            if h_offest + i < 0 or h_offest + i >= working_width:
+                continue
+            for j in range(sprite_screen_size):
+                if v_offset + j < 0 or v_offset + j >= buffer.height:
+                    continue
+                w = working_width if draw_map else 0
+                buffer.draw_point(w + h_offest + i, v_offset + j, (0, 0, 0))
     
         
 
