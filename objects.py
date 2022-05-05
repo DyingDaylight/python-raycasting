@@ -17,3 +17,18 @@ class Player:
         self.height = 5
         
         self.color = (160, 160, 160)
+        
+        
+class Sprite:
+    
+    def __init__(self, x: float, y: float, texture_id: int) -> None:
+        self.x = x
+        self.y = y
+        
+        self.width = 6
+        self.height = 6
+        
+        self.texture_id = int(texture_id)
+        
+    def __str__(self):
+        return f"Sprite at ({self.x}, {self.y}) with texture {self.texture_id}"

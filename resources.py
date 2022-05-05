@@ -3,12 +3,16 @@ import os
 
 from PIL import Image
 
+from objects import Sprite
+
 
 def parse(filename: str) -> tuple:
     logging.debug(f"Loading resources from {filename}...")
     
     if not os.path.exists(filename):
         raise AttributeError(f"Resource file {filename} is not found.")
+        
+    sprites = []
         
     with open(filename, "r") as resource_file:
         lines = resource_file.read().splitlines()
@@ -26,6 +30,12 @@ def parse(filename: str) -> tuple:
             pixmap = image.convert('RGB')
             walls_textures = WallTexture(pixmap)
             
+        if line.startswith("enemies:"):
+            logging.debug("Loading enemies...")
+            
+            enenmies_data = line.split(":")[1].split(";")
+            sprites = [Sprite(*tuple(map(float, data.split(",")))) for data in enenmies_data]
+        
         if line.startswith("enemies_textures"):
             logging.debug("Loading enemies' textures...")
             
@@ -52,7 +62,7 @@ def parse(filename: str) -> tuple:
             world = World(width, height, scheme, walls_textures)
             break
         
-    return world
+    return world, sprites
     
     
 class WallTexture:

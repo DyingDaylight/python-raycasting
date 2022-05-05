@@ -10,7 +10,7 @@ from image import PPMImage
 from objects import Player
 
 
-def render(buffer, world, player, draw_map=True):
+def render(buffer, world, player, sprites, draw_map=True):
     cell_width = buffer.width // (world.width * 2) if draw_map else buffer.width // world.width
     cell_height = buffer.height // world.height
     
@@ -87,6 +87,13 @@ def render(buffer, world, player, draw_map=True):
                     buffer.draw_point(x, y, column[j])
             
                 break
+                
+    if draw_map:
+        for sprite in sprites:
+            logging.debug(f"Sprite: {sprite}")
+            buffer.draw_recatangle(int(sprite.x * cell_width - sprite.width // 2), int(sprite.y * cell_height - sprite.height // 2),
+                                   sprite.width, sprite.height, (255, 0, 0))
+    
         
 
 def main():
@@ -105,7 +112,7 @@ def main():
     width = 1024 if args.map else 512
     height = 512
     
-    world = resources.parse("resources/resource.txt")
+    world, sprites = resources.parse("resources/resource.txt")
     player = Player(3.456, 2.345)
     
     buffer = PPMImage(width, height)
@@ -117,13 +124,13 @@ def main():
             player.a += 2 * math.pi / 360
             
             buffer.flush()
-            render(buffer, world, player, args.map)
+            render(buffer, world, player, sprites, args.map)
             
             images.append(Image.open(io.BytesIO(buffer.get_bytes())))
             
         images[0].save('output/animation.gif', save_all=True, append_images=images[1:], optimize=False, loop=0)
     else:
-        render(buffer, world, player, args.map)
+        render(buffer, world, player, sprites, args.map)
         buffer.write_to_file()    
     
     """  
