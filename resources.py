@@ -13,6 +13,7 @@ def parse(filename: str) -> tuple:
         raise AttributeError(f"Resource file {filename} is not found.")
         
     sprites = []
+    enemies_textures = None
         
     with open(filename, "r") as resource_file:
         lines = resource_file.read().splitlines()
@@ -28,7 +29,7 @@ def parse(filename: str) -> tuple:
         
             image = Image.open(texture_filename)
             pixmap = image.convert('RGB')
-            walls_textures = WallTexture(pixmap)
+            walls_textures = Texture(pixmap)
             
         if line.startswith("enemies:"):
             logging.debug("Loading enemies...")
@@ -45,9 +46,9 @@ def parse(filename: str) -> tuple:
                 raise AttributeError(f"Texture file {enenmies_filename} is not found.")
             
             # TODO: parse sprites
-            #image = Image.open(enenmies_filename)
-            #pixmap = image.convert('RGB')
-            #enemies_textures = Texture(pixmap)
+            image = Image.open(enenmies_filename)
+            pixmap = image.convert('RGBA')
+            enemies_textures = Texture(pixmap)
             
         if line.startswith("map_scheme"):
             logging.debug("Parsing world map...")
@@ -61,11 +62,15 @@ def parse(filename: str) -> tuple:
             
             world = World(width, height, scheme, walls_textures)
             break
+            
+    if enemies_textures:
+        for sprite in sprites:
+            sprite.texture = enemies_textures
         
     return world, sprites
     
     
-class WallTexture:
+class Texture:
     
     def __init__(self, pixmap: Image) -> None:
         self.pixmap = pixmap
@@ -98,7 +103,7 @@ class WallTexture:
     
 class World:
     
-    def __init__(self, width: int, height: int, scheme: str, walls_textures: WallTexture) -> None:
+    def __init__(self, width: int, height: int, scheme: str, walls_textures: Texture) -> None:
         self.width = width
         self.height = height
         self.scheme = scheme

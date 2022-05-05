@@ -37,6 +37,7 @@ def render(buffer, world, player, sprites, draw_map=True):
                                player.color)
 
     working_width = buffer.width // 2 if draw_map else buffer.width
+    depth_cache = [1000 for i in range(working_width)]
             
     # world's diagonal, the longest ray
     diagonal = int(math.sqrt(world.width ** 2 + world.height ** 2))
@@ -58,7 +59,9 @@ def render(buffer, world, player, sprites, draw_map=True):
                       
             if not world.is_empty(int(coord_x), int(coord_y)):
                 # visible column height depending on the distance
-                column_height = int(buffer.height // (t * math.cos(angle - player.a)))
+                distance = t * math.cos(angle - player.a)
+                depth_cache[i] = distance
+                column_height = int(buffer.height // distance)
                 
                 texture_id = world.get_texture_id(int(coord_x), int(coord_y))
                 
@@ -87,9 +90,14 @@ def render(buffer, world, player, sprites, draw_map=True):
                     buffer.draw_point(x, y, column[j])
             
                 break
+           
+    # TODO replace with depth cache
+    for sprite in sprites:
+        sprite.player_distance = math.sqrt(pow(player.x - sprite.x, 2) + pow(player.y - sprite.y, 2))
+                
+    sprites.sort(key=lambda s: s.player_distance, reverse=True)
                 
     for sprite in sprites:
-        logging.debug(f"Sprite: {sprite}")
         if draw_map:
             # draw sprite on mini map
             buffer.draw_recatangle(int(sprite.x * cell_width - sprite.width // 2), int(sprite.y * cell_height - sprite.height // 2),
@@ -100,32 +108,37 @@ def render(buffer, world, player, sprites, draw_map=True):
         while sprite_direction - player.a >  math.pi: sprite_direction -= 2 * math.pi
         while sprite_direction - player.a < -math.pi: sprite_direction += 2 * math.pi
         
-        sprite_distance = math.sqrt(pow(player.x - sprite.x, 2) + pow(player.y - sprite.y, 2))
-        sprite_screen_size = int(min(2000, buffer.height // sprite_distance))
-        h_offest = (sprite_direction - player.a) * working_width // player.fov + working_width // 2 - sprite_screen_size // 2
+        sprite_screen_size = int(min(2000, buffer.height // sprite.player_distance))
+        h_offest = int((sprite_direction - player.a) / player.fov * working_width + working_width / 2 - sprite_screen_size / 2)
         v_offset = buffer.height // 2 - sprite_screen_size // 2
         
         for i in range(sprite_screen_size):
             if h_offest + i < 0 or h_offest + i >= working_width:
                 continue
+            if depth_cache[int(h_offest + i)] < sprite.player_distance:
+                continue
             for j in range(sprite_screen_size):
                 if v_offset + j < 0 or v_offset + j >= buffer.height:
                     continue
+                    
                 w = working_width if draw_map else 0
-                buffer.draw_point(w + h_offest + i, v_offset + j, (0, 0, 0))
+                color = sprite.get_color(i, j, sprite_screen_size)
+                if color[3] > 128:
+                    buffer.draw_point(w + h_offest + i, v_offset + j, color[:3])
     
         
 
 def main():
-    # TODO: fish eye fix, animation?
     parser = argparse.ArgumentParser(description="Ray casting implemention in Python.")
     parser.add_argument("-g", "--gui", help="show gui", action="store_true")
     parser.add_argument("-m", "--map", help="show map", action="store_true")
     parser.add_argument("-a", "--anim", help="save as gif animation", action="store_true")
     parser.add_argument("-f", "--frames", help="amount of frames", type=int, default=1)
+    parser.add_argument("-o", "--output", help="path to output file", type=str, default="output\output")
     # set resource file
-    # set output file
     args = parser.parse_args()
+    
+    name = args.output if args.output else "output/output"
 
     logging.basicConfig(level=logging.DEBUG)
     
@@ -136,7 +149,7 @@ def main():
     player = Player(3.456, 2.345)
     
     buffer = PPMImage(width, height)
-    
+        
     if args.anim:
         images = []
         for frame in range(args.frames):
@@ -148,10 +161,11 @@ def main():
             
             images.append(Image.open(io.BytesIO(buffer.get_bytes())))
             
-        images[0].save('output/animation.gif', save_all=True, append_images=images[1:], optimize=False, loop=0)
+        if not name.endswith('.gif'): name += ".gif"
+        images[0].save(name, save_all=True, append_images=images[1:], optimize=False, loop=0)
     else:
         render(buffer, world, player, sprites, args.map)
-        buffer.write_to_file()    
+        buffer.write_to_file(name)    
     
     """  
     if args.gui:

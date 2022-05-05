@@ -30,5 +30,13 @@ class Sprite:
         
         self.texture_id = int(texture_id)
         
+        self.player_distance = 0
+        
+    def get_color(self, i: int, j: int, scale: int) -> tuple:
+        if not self.texture:
+            return (0, 0, 0, 255)
+        
+        return self.texture.get_pixel(self.texture_id, i * self.texture.size / scale, j * self.texture.size / scale)
+        
     def __str__(self):
         return f"Sprite at ({self.x}, {self.y}) with texture {self.texture_id}"
