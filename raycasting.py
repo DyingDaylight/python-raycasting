@@ -7,7 +7,7 @@ import io
 from PIL import Image
 
 from PySide6.QtGui  import QPixmap, QPainter
-from PySide6.QtCore import QThread, Signal, QMutex, QWaitCondition, QMutexLocker, Qt, QPointF
+from PySide6.QtCore import QThread, Signal, QMutex, QWaitCondition, QMutexLocker, Qt, QPointF, QElapsedTimer
 from PySide6.QtWidgets import QApplication, QWidget
 
 import resources
@@ -135,7 +135,7 @@ class RenderThread(QThread):
 
     rendered_image = Signal(PPMImage)
 
-    def __init__(self, buffer, world, player, sprites, draw_map, parent=None):
+    def __init__(self, buffer, world, player, sprites, draw_map, frames, parent=None):
         super().__init__(parent)
         
         self.mutex = QMutex()
@@ -146,6 +146,7 @@ class RenderThread(QThread):
         self.player = player
         self.sprites = sprites
         self.draw_map = draw_map
+        self.frames = frames
         
         self.restart = False
         self.abort = False
@@ -170,16 +171,42 @@ class RenderThread(QThread):
         
     
     def run(self):
-        render(self.buffer, self.world, self.player, self.sprites, self.draw_map)
-        self.rendered_image.emit(self.buffer)
+        timer = QElapsedTimer()
+        
+        while True:
+            current_frame = 0
+            while current_frame < self.frames:
+                timer.restart()
+                if self.restart:
+                    break
+                
+                if self.abort:
+                    return
+                    
+                
+                logging.debug(f"Frame: {current_frame}")
+                    
+                self.player.a += 2 * math.pi / 360
+                
+                buffer = PPMImage(self.buffer.width, self.buffer.height)
+                render(buffer, self.world, self.player, self.sprites, self.draw_map)
+                self.rendered_image.emit(buffer)
+                
+                current_frame += 1
+                
+            self.mutex.lock()
+            if not self.restart:
+                self.condition.wait(self.mutex)
+            self.restart = False
+            self.mutex.unlock()
             
     
 class ImageWidget(QWidget):
     
-    def __init__(self, buffer, world, player, sprites, draw_map, parent=None):
+    def __init__(self, buffer, world, player, sprites, draw_map, frames, parent=None):
         super().__init__(parent)
         
-        self.thread = RenderThread(buffer, world, player, sprites, draw_map)
+        self.thread = RenderThread(buffer, world, player, sprites, draw_map, frames)
         self.pixmap = QPixmap()
         
         self._pixmap_offset = QPointF()
@@ -193,8 +220,8 @@ class ImageWidget(QWidget):
         
     def paintEvent(self, event):
         with QPainter(self) as painter:
+            painter.fillRect(self.rect(), Qt.black) 
             if self.pixmap.isNull():
-                painter.fillRect(self.rect(), Qt.black) 
                 loading_text = "Loading..."
                 metrics = painter.fontMetrics()
                 text_width = metrics.horizontalAdvance(loading_text)
@@ -205,7 +232,6 @@ class ImageWidget(QWidget):
         
         
     def update_pixmap(self, image):
-        logging.debug("Widget: update_pixmap")
         self.pixmap = QPixmap(image.width, image.height)
         self.pixmap.loadFromData(image.get_bytes())
         self.update()
@@ -236,7 +262,7 @@ def main():
     if args.gui:
         logging.debug("Start Gui")
         app = QApplication(sys.argv) 
-        widget = ImageWidget(buffer, world, player, sprites, args.map)
+        widget = ImageWidget(buffer, world, player, sprites, args.map, args.frames)
         widget.resize(width, height)
         widget.show()
         code = app.exec()
