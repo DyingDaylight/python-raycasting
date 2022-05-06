@@ -1,9 +1,14 @@
 import argparse
 import logging
 import math
+import sys
 import io
 
 from PIL import Image
+
+from PySide6.QtGui  import QPixmap, QPainter
+from PySide6.QtCore import QThread, Signal, QMutex, QWaitCondition, QMutexLocker, Qt, QPointF
+from PySide6.QtWidgets import QApplication, QWidget
 
 import resources
 from image import PPMImage
@@ -126,7 +131,85 @@ def render(buffer, world, player, sprites, draw_map=True):
                 if color[3] > 128:
                     buffer.draw_point(w + h_offest + i, v_offset + j, color[:3])
     
+class RenderThread(QThread):
+
+    rendered_image = Signal(PPMImage)
+
+    def __init__(self, buffer, world, player, sprites, draw_map, parent=None):
+        super().__init__(parent)
         
+        self.mutex = QMutex()
+        self.condition = QWaitCondition()
+        
+        self.buffer = buffer
+        self.world = world
+        self.player = player
+        self.sprites = sprites
+        self.draw_map = draw_map
+        
+        self.restart = False
+        self.abort = False
+
+
+    def stop(self):
+        self.mutex.lock()
+        self.abort = True
+        self.condition.wakeOne()
+        self.mutex.unlock()
+        
+        self.wait(2000)
+        
+    
+    def render(self):
+        with QMutexLocker(self.mutex):
+            if not self.isRunning():
+                self.start(QThread.LowPriority)
+            else:
+                self.restart = True
+                self.condition.wakeOne()
+        
+    
+    def run(self):
+        render(self.buffer, self.world, self.player, self.sprites, self.draw_map)
+        self.rendered_image.emit(self.buffer)
+            
+    
+class ImageWidget(QWidget):
+    
+    def __init__(self, buffer, world, player, sprites, draw_map, parent=None):
+        super().__init__(parent)
+        
+        self.thread = RenderThread(buffer, world, player, sprites, draw_map)
+        self.pixmap = QPixmap()
+        
+        self._pixmap_offset = QPointF()
+        
+        self.thread.rendered_image.connect(self.update_pixmap)
+        
+        self.setWindowTitle("Ray Casting")
+        
+        self.thread.render()
+        
+        
+    def paintEvent(self, event):
+        with QPainter(self) as painter:
+            if self.pixmap.isNull():
+                painter.fillRect(self.rect(), Qt.black) 
+                loading_text = "Loading..."
+                metrics = painter.fontMetrics()
+                text_width = metrics.horizontalAdvance(loading_text)
+                painter.setPen(Qt.white)
+                painter.drawText((self.width() - text_width) / 2, metrics.leading() + metrics.ascent(), loading_text)
+            else:
+                painter.drawPixmap(self._pixmap_offset, self.pixmap)
+        
+        
+    def update_pixmap(self, image):
+        logging.debug("Widget: update_pixmap")
+        self.pixmap = QPixmap(image.width, image.height)
+        self.pixmap.loadFromData(image.get_bytes())
+        self.update()
+    
 
 def main():
     parser = argparse.ArgumentParser(description="Ray casting implemention in Python.")
@@ -148,127 +231,35 @@ def main():
     world, sprites = resources.parse("resources/resource.txt")
     player = Player(3.456, 2.345)
     
-    buffer = PPMImage(width, height)
-        
-    if args.anim:
-        images = []
-        for frame in range(args.frames):
-            logging.debug(f"Frame {frame}")
-            player.a += 2 * math.pi / 360
-            
-            buffer.flush()
-            render(buffer, world, player, sprites, args.map)
-            
-            images.append(Image.open(io.BytesIO(buffer.get_bytes())))
-            
-        if not name.endswith('.gif'): name += ".gif"
-        images[0].save(name, save_all=True, append_images=images[1:], optimize=False, loop=0)
-    else:
-        render(buffer, world, player, sprites, args.map)
-        buffer.write_to_file(name)    
+    buffer = PPMImage(width, height) 
     
-    """  
     if args.gui:
         logging.debug("Start Gui")
-        app = QApplication(sys.argv)
+        app = QApplication(sys.argv) 
+        widget = ImageWidget(buffer, world, player, sprites, args.map)
+        widget.resize(width, height)
+        widget.show()
+        code = app.exec()
+        widget.thread.stop()
+        sys.exit(code)
     else:
-        logging.debug("Run in batch")    
-    
-      
-    def run():
-        def update_label(dt):
-            logging.debug("Update label")
-            player.a += 2 * math.pi / 360
-            output.render(Gradient())
-            output.render(world)
-            window.updated = True
-            window.update()
-        
-        FPS = 60
-        lastFrameTime = time.time()
-        while window.is_open:
-    
-            currentTime = time.time()
-            # dt is the time delta in seconds (float).
-            dt = currentTime - lastFrameTime
-            lastFrameTime = currentTime
+        if args.anim:
+            images = []
+            for frame in range(args.frames):
+                logging.debug(f"Frame {frame}")
+                player.a += 2 * math.pi / 360
                 
-            update_label(dt)
+                buffer.flush()
+                render(buffer, world, player, sprites, args.map)
+                
+                images.append(Image.open(io.BytesIO(buffer.get_bytes())))
+                
+            if not name.endswith('.gif'): name += ".gif"
+            images[0].save(name, save_all=True, append_images=images[1:], optimize=False, loop=0)
+        else:
+            render(buffer, world, player, sprites, args.map)
+            buffer.write_to_file(name)   
         
         
-            sleepTime = 1./FPS - (currentTime - lastFrameTime)
-            if sleepTime > 0:
-                time.sleep(sleepTime)
-   
-    #timer = QTimer()
-    #timer.timeout.connect(update_label)
-    #timer.start(10000)  # every 10,000 milliseconds
-
-    if args.gui:
-        window = MainWindow(output)
-        window.show()
-        
-        p = ProcessRunnable(target=run, args=())
-        p.start()
-        
-        sys.exit(app.exec())
-    else:
-        output.drop("output.ppm")
-
-           
-    for frame in range(10):
-        name = f"output/frame{frame}"
-        player.a += 2 * math.pi / 360
-        output.flush()
-        output.render(world)
-        output.render(player)
-        output.drop(name)
-
-    """
-    
-import sys
-import time 
-from PySide6.QtCore import Qt, QPoint, QTimer, QRunnable, QThreadPool, QByteArray
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow
-from PySide6.QtGui import QPixmap, QPainter, QColor
-
-class ProcessRunnable(QRunnable):
-    def __init__(self, target, args):
-        QRunnable.__init__(self)
-        self.t = target
-        self.args = args
-
-    def run(self):
-        self.t(*self.args)
-
-    def start(self):
-        QThreadPool.globalInstance().start(self)
-
-
-class MainWindow(QMainWindow):
-    
-    def __init__(self, output):
-        super().__init__()
-
-        self.output = output
-        self.label = QLabel()
-        pixmap = QPixmap(self.output.width, self.output.height)
-        pixmap.loadFromData(self.output.get_bytes())
-        self.label.setPixmap(pixmap)
-        self.setCentralWidget(self.label)
-        
-        self.is_open = True
-        self.updated = False
-
-    def paintEvent(self, event):
-        if self.updated:
-            pixmap = QPixmap(self.output.width, self.output.height)
-            pixmap.loadFromData(self.output.get_bytes())
-            self.label.setPixmap(pixmap)
-            self.updated = False
-        
-    def closeEvent(self, event):
-        self.is_open = False
-    
 if __name__ == "__main__":
     main()
