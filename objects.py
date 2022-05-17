@@ -29,6 +29,7 @@ class Sprite:
         self.height = 6
         
         self.texture_id = int(texture_id)
+        self.texture = None
         
         self.player_distance = 0
         

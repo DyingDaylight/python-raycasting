@@ -73,19 +73,28 @@ def parse(filename: str) -> tuple:
 class Texture:
     
     def __init__(self, pixmap: Image) -> None:
+        """Texture is a number of squares in a row"""
+    
         self.pixmap = pixmap
         
-        self.width = pixmap.size[0]
-        self.height = pixmap.size[1]
+        self.size = pixmap.size[1]
+        self.count, mod = divmod(pixmap.size[0], self.size)
         
-        # wall texture is a number or square tiles in a row
-        self.size = self.height # textures are squares
-        self.count = self.width / self.size
+        if mod != 0:
+            raise ValueError("Textures are not squares")
+        if self.size * self.count !=  self.pixmap.size[0]:
+            raise ValueError("Textures are not squares")
         
     
     def get_column(self, texture_id: int, x_in_texture: float, height: int) -> list:
-        if texture_id >= self.count or x_in_texture >= self.size:
-            raise ValueError("Cannot get texture column")
+        if texture_id < 0 or texture_id >= self.count:
+            raise ValueError("Wrong texture id")
+
+        if x_in_texture < 0 or x_in_texture >= self.size:
+            raise ValueError("x out of range")
+            
+        #if height > self.size:
+        #    raise ValueError("Desired height is more that size")
             
         column = []
         
