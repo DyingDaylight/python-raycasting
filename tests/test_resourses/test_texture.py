@@ -28,7 +28,7 @@ class TestTexture(unittest.TestCase):
         pixmap = image.convert('RGBA')
         with self.assertRaises(ValueError, msg="Textures are not squares"):
             texture = Texture(pixmap)
-            
+
     def test_get_column(self):
         expected_column = [(192, 192, 0, 255) for i in range(32)]
         column = self.texture.get_column(0, 0, self.texture.size)
@@ -51,12 +51,12 @@ class TestTexture(unittest.TestCase):
         column = self.texture.get_column(2, 16, self.texture.size)
         self.assertEqual(column, expected_column)
 
-    def test_get_column_wrong_texture_id(self):
-        with self.assertRaises(ValueError, msg="Wrong texture id"):
+    def test_get_column_invalid_texture_id(self):
+        with self.assertRaises(ValueError, msg="Invalid texture id"):
             self.texture.get_column(3, 0, self.texture.size)
-        with self.assertRaises(ValueError, msg="Wrong texture id"):
+        with self.assertRaises(ValueError, msg="Invalid texture id"):
             self.texture.get_column(4, 0, self.texture.size)
-        with self.assertRaises(ValueError, msg="Wrong texture id"):
+        with self.assertRaises(ValueError, msg="Invalid texture id"):
             self.texture.get_column(-1, 0, self.texture.size)
         
     def test_get_column_x_out_of_range(self):
@@ -82,6 +82,45 @@ class TestTexture(unittest.TestCase):
         column = self.texture.get_column(0, 1, height)
         self.assertEqual(len(column), len(expected_column))
         self.assertEqual(column, expected_column)
+        
+    def test_get_pixel(self):
+        pixel = self.texture.get_pixel(0, 0, 0)
+        self.assertEqual((192, 192, 0, 255), pixel)
+        
+        pixel = self.texture.get_pixel(1, 16, 16)
+        self.assertEqual((0, 255, 0, 255), pixel)
+        
+    def test_get_pixel_invalid_texture_id(self):
+        with self.assertRaises(ValueError, msg="Invalid texture id"):
+            self.texture.get_pixel(-1, 0, 0)
+        with self.assertRaises(ValueError, msg="Invalid texture id"):
+            self.texture.get_pixel(3, 0, 0)
+        with self.assertRaises(ValueError, msg="Invalid texture id"):
+            self.texture.get_pixel(4, 0, 0)
+            
+    def test_get_pixel_invalid_coordinate(self):
+        with self.assertRaises(ValueError, msg="x out of range"):
+            self.texture.get_pixel(0, 32, 0)
+        with self.assertRaises(ValueError, msg="x out of range"):
+            self.texture.get_pixel(0, 33, 0)
+        with self.assertRaises(ValueError, msg="x out of range"):
+            self.texture.get_pixel(0, -1, 0)
+            
+        with self.assertRaises(ValueError, msg="y out of range"):
+            self.texture.get_pixel(0, 0, 32)
+        with self.assertRaises(ValueError, msg="y out of range"):
+            self.texture.get_pixel(0, 0, 33)
+        with self.assertRaises(ValueError, msg="y out of range"):
+            self.texture.get_pixel(0, 0, -1)
+            
+        with self.assertRaises(ValueError, msg="x out of range"):
+            self.texture.get_pixel(0, 32, 32)
+            
+    def test_logging(self):
+        with self.assertNoLogs(level="INFO"):
+            self.texture.get_pixel(0, 0, 0)
+        with self.assertNoLogs(level="INFO"):
+            self.texture.get_column(0, 0, self.texture.size)
         
 if __name__ == '__main__':
     unittest.main()

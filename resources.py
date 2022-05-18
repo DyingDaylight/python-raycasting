@@ -88,13 +88,10 @@ class Texture:
     
     def get_column(self, texture_id: int, x_in_texture: float, height: int) -> list:
         if texture_id < 0 or texture_id >= self.count:
-            raise ValueError("Wrong texture id")
+            raise ValueError("Invalid texture id")
 
         if x_in_texture < 0 or x_in_texture >= self.size:
             raise ValueError("x out of range")
-            
-        #if height > self.size:
-        #    raise ValueError("Desired height is more that size")
             
         column = []
         
@@ -107,6 +104,12 @@ class Texture:
         
     
     def get_pixel(self, texture_id: int, x: int, y: int) -> tuple:
+        if texture_id < 0 or texture_id >= self.count:
+            raise ValueError("Invalid texture id")
+        if x < 0 or x >= self.size:
+            raise ValueError("x out of range")
+        if y < 0 or y >= self.size:
+            raise ValueError("y out of range")
         return self.pixmap.getpixel((x + texture_id * self.size, y))
         
     
@@ -120,10 +123,20 @@ class World:
         
     
     def is_empty(self, x: int, y: int) -> bool:
+        if x < 0 or x >= self.width:
+            raise ValueError("x out of range")
+        if y < 0 or y >= self.width:
+            raise ValueError("y out of range")
+            
         return self.scheme[x + y * self.width] == " "
         
         
     def get_texture_id(self, x: int, y: int) -> int:
+        if x < 0 or x >= self.width:
+            raise ValueError("x out of range")
+        if y < 0 or y >= self.width:
+            raise ValueError("y out of range")
+            
         char = self.scheme[x + y * self.width]
         if char == " ":
             return -1
