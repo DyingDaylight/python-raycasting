@@ -1,0 +1,8 @@
+enemies:1,1,1;2,2,1
+enemies_textures:test_resources/textures/enemies.png
+walls_textures:test_resources/textures/textures.png
+map_scheme:
+000000
+0    0
+0    0
+000000

@@ -1,6 +1,6 @@
-walls_textures:resources/walltext.png
-enemies_textures:resources/monsters.png
 enemies:3.523,3.812,2;1.834,8.765,0;5.323,5.365,1;4.123,10.265,1
+enemies_textures:resources/monsters.png
+walls_textures:resources/walltext.png
 map_scheme:
 0000222222220000
 1              0

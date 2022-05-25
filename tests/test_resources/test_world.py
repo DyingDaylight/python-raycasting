@@ -21,19 +21,25 @@ class TestWorld(unittest.TestCase):
         self.assertTrue(self.world.is_empty(1, 1))
         
     def test_world_is_empty_out_of_range(self):
-        with self.assertRaises(ValueError, msg="x out of range"):
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.is_empty(-1, 0)
-        with self.assertRaises(ValueError, msg="x out of range"):
+        self.assertEqual(cntx_mngr.exception.args[0], "x out of range")
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.is_empty(25, 0)
-        with self.assertRaises(ValueError, msg="x out of range"):
+        self.assertEqual(cntx_mngr.exception.args[0], "x out of range")
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.is_empty(26, 0)
+        self.assertEqual(cntx_mngr.exception.args[0], "x out of range")
             
-        with self.assertRaises(ValueError, msg="y out of range"):
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.is_empty(0, -1)
-        with self.assertRaises(ValueError, msg="y out of range"):
+        self.assertEqual(cntx_mngr.exception.args[0], "y out of range")
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.is_empty(0, 25)
-        with self.assertRaises(ValueError, msg="y out of range"):
+        self.assertEqual(cntx_mngr.exception.args[0], "y out of range")
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.is_empty(0, 26)
+        self.assertEqual(cntx_mngr.exception.args[0], "y out of range")
             
     def test_world_get_texture_id(self):
         self.assertEqual(self.world.get_texture_id(0, 0), 0)
@@ -42,24 +48,31 @@ class TestWorld(unittest.TestCase):
         self.assertEqual(self.world.get_texture_id(1, 1), -1)
         
     def test_world_get_texture_id_out_of_range(self):
-        with self.assertRaises(ValueError, msg="x out of range"):
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.get_texture_id(-1, 0)
-        with self.assertRaises(ValueError, msg="x out of range"):
+        self.assertEqual(cntx_mngr.exception.args[0], "x out of range")
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.get_texture_id(25, 0)
-        with self.assertRaises(ValueError, msg="x out of range"):
+        self.assertEqual(cntx_mngr.exception.args[0], "x out of range")
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.get_texture_id(26, 0)
+        self.assertEqual(cntx_mngr.exception.args[0], "x out of range")
             
-        with self.assertRaises(ValueError, msg="y out of range"):
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.get_texture_id(0, -1)
-        with self.assertRaises(ValueError, msg="y out of range"):
+        self.assertEqual(cntx_mngr.exception.args[0], "y out of range")
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.get_texture_id(0, 25)
-        with self.assertRaises(ValueError, msg="y out of range"):
+        self.assertEqual(cntx_mngr.exception.args[0], "y out of range")
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.get_texture_id(0, 26)
+        self.assertEqual(cntx_mngr.exception.args[0], "y out of range")
             
     def test_world_get_texture_id_invalid_texture_id(self):
         self.world.scheme = "000001   11 3 11   100000"
-        with self.assertRaises(ValueError, msg="Unknown texture id: 3 out of 3"):
+        with self.assertRaises(ValueError) as cntx_mngr:
             self.world.get_texture_id(2, 2)
+        self.assertEqual(cntx_mngr.exception.args[0], "Unknown texture id: 3 out of 3")
             
     def test_logging(self):
         with self.assertNoLogs(level="INFO"):

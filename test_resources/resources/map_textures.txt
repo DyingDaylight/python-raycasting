@@ -1,0 +1,6 @@
+walls_textures:test_resources/textures/textures.png
+map_scheme:
+000000
+0    0
+0    0
+000000

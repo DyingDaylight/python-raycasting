@@ -12,32 +12,24 @@ def parse(filename: str) -> tuple:
     if not os.path.exists(filename):
         raise AttributeError(f"Resource file {filename} is not found.")
         
-    sprites = []
+    enemies = []
     enemies_textures = None
+    walls_textures = None
         
     with open(filename, "r") as resource_file:
-        lines = resource_file.read().splitlines()
-        
-    for i, line in enumerate(lines):
-        if line.startswith("walls_textures"):
-            logging.debug("Loading walls' textures...")
-            
-            texture_filename = line.split(":")[1]
-            
-            if not os.path.exists(texture_filename):
-                raise AttributeError(f"Texture file {texture_filename} is not found.")
-        
-            image = Image.open(texture_filename)
-            pixmap = image.convert('RGB')
-            walls_textures = Texture(pixmap)
-            
+        text = resource_file.read()
+        if "map_scheme:" not in text:
+            raise ValueError("Map scheme is not provided")
+        lines = text.splitlines()
+                
+    for i, line in enumerate(lines):            
         if line.startswith("enemies:"):
             logging.debug("Loading enemies...")
             
             enenmies_data = line.split(":")[1].split(";")
-            sprites = [Sprite(*tuple(map(float, data.split(",")))) for data in enenmies_data]
+            enemies = [Sprite(*tuple(map(float, data.split(",")))) for data in enenmies_data]
         
-        if line.startswith("enemies_textures"):
+        if line.startswith("enemies_textures") and enemies:
             logging.debug("Loading enemies' textures...")
             
             enenmies_filename = line.split(":")[1]
@@ -50,6 +42,18 @@ def parse(filename: str) -> tuple:
             pixmap = image.convert('RGBA')
             enemies_textures = Texture(pixmap)
             
+        if line.startswith("walls_textures"):
+            logging.debug("Loading walls' textures...")
+            
+            texture_filename = line.split(":")[1]
+            
+            if not os.path.exists(texture_filename):
+                raise AttributeError(f"Texture file {texture_filename} is not found.")
+        
+            image = Image.open(texture_filename)
+            pixmap = image.convert('RGB')
+            walls_textures = Texture(pixmap)
+            
         if line.startswith("map_scheme"):
             logging.debug("Parsing world map...")
             
@@ -59,15 +63,24 @@ def parse(filename: str) -> tuple:
             
             if len(scheme) != width * height:
                 raise AttributeError(f"World dimentions {len(scheme)} differ from {width} * {height}")
-            
+                
+            for i in scheme:
+                if i == " ": 
+                    continue
+                elif i.isdigit(): 
+                    if walls_textures and (int(i) < 0 or int(i) >= walls_textures.count):
+                        raise AttributeError(f"Invalid wall texture id: {i}")
+                else: 
+                    raise AttributeError(f"Invalid map symbol {i}")
+                    
             world = World(width, height, scheme, walls_textures)
             break
             
     if enemies_textures:
-        for sprite in sprites:
+        for sprite in enemies:
             sprite.texture = enemies_textures
         
-    return world, sprites
+    return world, enemies
     
     
 class Texture:
@@ -143,7 +156,7 @@ class World:
         
         texture_id = int(char)
         
-        if texture_id >= self.walls_textures.count:
+        if self.walls_textures and texture_id >= self.walls_textures.count:
             raise ValueError(f"Unknown texture id: {texture_id} out of {self.walls_textures.count}")
             
         return texture_id

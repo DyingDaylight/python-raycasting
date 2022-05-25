@@ -21,7 +21,7 @@ class Player:
         
 class Sprite:
     
-    def __init__(self, x: float, y: float, texture_id: int) -> None:
+    def __init__(self, x: float, y: float, texture_id: int = -1) -> None:
         self.x = x
         self.y = y
         
@@ -38,6 +38,13 @@ class Sprite:
             return (0, 0, 0, 255)
         
         return self.texture.get_pixel(self.texture_id, i * self.texture.size / scale, j * self.texture.size / scale)
+        
+    def __eq__(self, other):
+        return type(self) == type(other) and \
+               self.x == other.x and \
+               self.y == other.y and \
+               self.texture_id == other.texture_id
+        
         
     def __str__(self):
         return f"Sprite at ({self.x}, {self.y}) with texture {self.texture_id}"
