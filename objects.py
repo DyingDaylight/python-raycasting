@@ -33,11 +33,14 @@ class Sprite:
         
         self.player_distance = 0
         
-    def get_color(self, i: int, j: int, scale: int) -> tuple:
+    def get_color(self, u: int, v: int) -> tuple:
         if not self.texture:
             return (0, 0, 0, 255)
         
-        return self.texture.get_pixel(self.texture_id, i * self.texture.size / scale, j * self.texture.size / scale)
+        if self.texture_id == -1:
+            raise ValueError("Texture Id is not set")
+        
+        return self.texture.get_pixel(self.texture_id, u * self.texture.size, v * self.texture.size)
         
     def __eq__(self, other):
         return type(self) == type(other) and \

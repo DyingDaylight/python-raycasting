@@ -127,7 +127,7 @@ def render(buffer, world, player, sprites, draw_map=True):
                     continue
                     
                 w = working_width if draw_map else 0
-                color = sprite.get_color(i, j, sprite_screen_size)
+                color = sprite.get_color(i / sprite_screen_size, j / sprite_screen_size)
                 if color[3] > 128:
                     buffer.draw_point(w + h_offest + i, v_offset + j, color[:3])
     
