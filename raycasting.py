@@ -4,6 +4,8 @@ import math
 import sys
 import io
 
+from collections import namedtuple
+
 from PIL import Image
 
 from PySide6.QtGui  import QPixmap, QPainter
@@ -14,32 +16,39 @@ import resources
 from image import PPMImage
 from objects import Player
 
+def render_top_bottom_map(buffer, world, world_unit: namedtuple, player, sprites):
+    # render top-down map        
+    for y in range(world.height):
+        top_left_y = y * world_unit.height
+    
+        for x in range(world.width):
+            if world.is_empty(x, y):
+                continue
+            
+            top_left_x = x * world_unit.width
+            
+            buffer.draw_recatangle(top_left_x, top_left_y, 
+                                   world_unit.width, world_unit.height, 
+                                   world.get_color_from_texture(x, y, 0, 0))
+    
+    # render player on top-down map
+    buffer.draw_recatangle(int(player.x * world_unit.width - player.width // 2), 
+                           int(player.y * world_unit.height - player.height // 2), 
+                           player.width, player.height, 
+                           player.color)
+                           
+    for sprite in sprites:
+        # draw sprite on mini map
+        buffer.draw_recatangle(int(sprite.x * world_unit.width - sprite.width // 2), 
+                               int(sprite.y * world_unit.height - sprite.height // 2),
+                               sprite.width, sprite.height, 
+                               (255, 0, 0))
+    
+
 
 def render(buffer, world, player, sprites, draw_map=True):
     cell_width = buffer.width // (world.width * 2) if draw_map else buffer.width // world.width
     cell_height = buffer.height // world.height
-    
-    if draw_map:
-        # render top-down map        
-        for y in range(world.height):
-            for x in range(world.width):
-                texture_id = world.get_texture_id(x, y)
-                
-                if texture_id < 0:
-                    continue
-                
-                rectangle_x = x * cell_width
-                rectangle_y = y * cell_height
-                
-                buffer.draw_recatangle(rectangle_x, rectangle_y, 
-                                       cell_width, cell_height, 
-                                       world.walls_textures.get_pixel(texture_id, 0, 0))
-        
-        # render player on top-down map
-        buffer.draw_recatangle(int(player.x * cell_width), 
-                               int(player.y * cell_height), 
-                               player.width, player.height, 
-                               player.color)
 
     working_width = buffer.width // 2 if draw_map else buffer.width
     depth_cache = [1000 for i in range(working_width)]
@@ -95,6 +104,11 @@ def render(buffer, world, player, sprites, draw_map=True):
                     buffer.draw_point(x, y, column[j])
             
                 break
+                
+    if draw_map:
+        WorldUnit = namedtuple('WorldUnit', 'width height')
+        wu = WorldUnit(cell_width, cell_height)
+        render_top_bottom_map(buffer, world, wu, player, sprites)
            
     # TODO replace with depth cache
     for sprite in sprites:
@@ -103,11 +117,6 @@ def render(buffer, world, player, sprites, draw_map=True):
     sprites.sort(key=lambda s: s.player_distance, reverse=True)
                 
     for sprite in sprites:
-        if draw_map:
-            # draw sprite on mini map
-            buffer.draw_recatangle(int(sprite.x * cell_width - sprite.width // 2), int(sprite.y * cell_height - sprite.height // 2),
-                                   sprite.width, sprite.height, (255, 0, 0))
-
         # absolute direction from the player to the sprite
         sprite_direction = math.atan2(sprite.y - player.y, sprite.x - player.x)
         while sprite_direction - player.a >  math.pi: sprite_direction -= 2 * math.pi

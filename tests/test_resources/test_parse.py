@@ -11,9 +11,9 @@ class TestParse(unittest.TestCase):
         filename = "test_resources/resources/map_only.txt"
         world, enemies = parse(filename)
         self.assertEqual(enemies, [])
-        expected_scheme = "0000000    00    0000000"
+        expected_scheme = "0111110    0033  00    00    0222220"
         self.assertEqual(world.width, 6)
-        self.assertEqual(world.height, 4)
+        self.assertEqual(world.height, 6)
         self.assertEqual(world.scheme, expected_scheme)
         self.assertIsNone(world.walls_textures, None)
         

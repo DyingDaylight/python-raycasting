@@ -39,11 +39,26 @@ class PPMImage:
     
     
     def draw_point(self, x: int, y: int, color: tuple) -> None:
+        if len(color) != 3 or not all(0 <= comp <= 255 for comp in color):
+            raise ValueError("Color should be three component tuple of ints 0-255")
+            
+        if not 0 <= x < self.width or not 0 <= y < self.height:
+            raise ValueError(f"Invalid coordinates ({x}, {y})")
+            
         index = self.cache[(x, y)]
         self.framebuffer[index:index + 3] = array.array('B', color)
         
         
     def draw_recatangle(self, x: int, y: int, width: int, height: int, color: tuple) -> None:
+        if len(color) != 3 or not all(0 <= comp <= 255 for comp in color):
+            raise ValueError("Color should be three component tuple of ints 0-255")
+            
+        if not 0 <= x < self.width or not 0 <= y < self.height:
+            raise ValueError(f"Invalid coordinates ({x}, {y})")
+            
+        if x + width > self.width or y + height > self.height:
+            raise ValueError(f"Invalid dimentions ({x} + {width}, {y} + {height}) out of {self.width} x {self.height}")
+            
         for j in range(height):    
             start = self.cache[(x, y + j)]
             end = self.cache[(x + width, y + j)]

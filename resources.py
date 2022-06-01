@@ -1,4 +1,5 @@
 import logging
+import random
 import os
 
 from PIL import Image
@@ -133,6 +134,12 @@ class World:
         self.height = height
         self.scheme = scheme
         self.walls_textures = walls_textures
+        random.seed(666)
+        if not self.walls_textures:
+            self.walls_colors = {}
+            max_texture_id = max(int(ch) for ch in self.scheme if ch.isdigit())
+            for i in range(max_texture_id + 1):
+                self.walls_colors[i] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         
     
     def is_empty(self, x: int, y: int) -> bool:
@@ -142,6 +149,13 @@ class World:
             raise ValueError("y out of range")
             
         return self.scheme[x + y * self.width] == " "
+        
+    # TODO: write tests
+    def get_color_from_texture(self, x: int, y: int, u: int, v: int):
+        if not self.walls_textures:
+            return self.walls_colors[self.get_texture_id(x, y)]
+    
+        return self.walls_textures.get_pixel(self.get_texture_id(x, y), u, v)
         
         
     def get_texture_id(self, x: int, y: int) -> int:
