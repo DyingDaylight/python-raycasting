@@ -23,17 +23,17 @@ class TestParse(unittest.TestCase):
         image = Image.open("test_resources/textures/textures.png")
         expected_pixmap = image.convert('RGB')
         expected_pixmap_with_alpha = image.convert('RGBA')
-        expected_scheme = "0000000    00    0000000"
+        expected_scheme = "0111110    0000  00    00    0222220"
         
         world, enemies = parse(filename)
 
         self.assertEqual(world.width, 6)
-        self.assertEqual(world.height, 4)
+        self.assertEqual(world.height, 6)
         self.assertEqual(world.scheme, expected_scheme)
         diff = ImageChops.difference(world.walls_textures.pixmap, expected_pixmap)
         self.assertFalse(diff.getbbox())     
         
-        self.assertEqual(enemies, [Sprite(1,1,1), Sprite(2,2,1)])
+        self.assertEqual(enemies, [Sprite(1.5, 1.5, 1), Sprite(3.2, 3.2, 1)])
         for enemy in enemies:
             self.assertFalse(ImageChops.difference(enemy.texture.pixmap, expected_pixmap_with_alpha).getbbox())
         
@@ -43,17 +43,17 @@ class TestParse(unittest.TestCase):
         image = Image.open("test_resources/textures/textures.png")
         expected_pixmap = image.convert('RGB')
         expected_pixmap_with_alpha = image.convert('RGBA')
-        expected_scheme = "0000000    00    0000000"
+        expected_scheme = "0111110    0000  00    00    0222220"
         
         world, enemies = parse(filename)
 
         self.assertEqual(world.width, 6)
-        self.assertEqual(world.height, 4)
+        self.assertEqual(world.height, 6)
         self.assertEqual(world.scheme, expected_scheme)
         diff = ImageChops.difference(world.walls_textures.pixmap, expected_pixmap)
         self.assertFalse(diff.getbbox())     
         
-        self.assertEqual(enemies, [Sprite(1,1,-1), Sprite(2,2,-1)])
+        self.assertEqual(enemies, [Sprite(1.5, 1.5, -1), Sprite(3.2, 3.2, -1)])
         for enemy in enemies:
             self.assertIsNone(enemy.texture)
         
@@ -62,12 +62,12 @@ class TestParse(unittest.TestCase):
         
         image = Image.open("test_resources/textures/textures.png")
         expected_pixmap = image.convert('RGB')
-        expected_scheme = "0000000    00    0000000"
+        expected_scheme = "0111110    0000  00    00    0222220"
         
         world, enemies = parse(filename)
 
         self.assertEqual(world.width, 6)
-        self.assertEqual(world.height, 4)
+        self.assertEqual(world.height, 6)
         self.assertEqual(world.scheme, expected_scheme)
         diff = ImageChops.difference(world.walls_textures.pixmap, expected_pixmap)
         self.assertFalse(diff.getbbox())     
@@ -79,16 +79,16 @@ class TestParse(unittest.TestCase):
         
         image = Image.open("test_resources/textures/textures.png")
         expected_pixmap_with_alpha = image.convert('RGBA')
-        expected_scheme = "0000000    00    0000000"
+        expected_scheme = "0111110    0000  00    00    0222220"
         
         world, enemies = parse(filename)
 
         self.assertEqual(world.width, 6)
-        self.assertEqual(world.height, 4)
+        self.assertEqual(world.height, 6)
         self.assertEqual(world.scheme, expected_scheme)
         self.assertIsNone(world.walls_textures) 
         
-        self.assertEqual(enemies, [Sprite(1,1,1), Sprite(2,2,1)])
+        self.assertEqual(enemies, [Sprite(1.5, 1.5, 1), Sprite(3.2, 3.2, 1)])
         for enemy in enemies:
             self.assertFalse(ImageChops.difference(enemy.texture.pixmap, expected_pixmap_with_alpha).getbbox())
         
@@ -97,12 +97,12 @@ class TestParse(unittest.TestCase):
         
         image = Image.open("test_resources/textures/textures.png")
         expected_pixmap = image.convert('RGB')
-        expected_scheme = "0000000    00    0000000"
+        expected_scheme = "0111110    0000  00    00    0222220"
         
         world, enemies = parse(filename)
 
         self.assertEqual(world.width, 6)
-        self.assertEqual(world.height, 4)
+        self.assertEqual(world.height, 6)
         self.assertEqual(world.scheme, expected_scheme)
         diff = ImageChops.difference(world.walls_textures.pixmap, expected_pixmap)
         self.assertFalse(diff.getbbox())     
@@ -112,16 +112,16 @@ class TestParse(unittest.TestCase):
     def test_map_and_enemies(self):
         filename = "test_resources/resources/map_enemies.txt"
 
-        expected_scheme = "0000000    00    0000000"
+        expected_scheme = "0111110    0000  00    00    0222220"
         
         world, enemies = parse(filename)
 
         self.assertEqual(world.width, 6)
-        self.assertEqual(world.height, 4)
+        self.assertEqual(world.height, 6)
         self.assertEqual(world.scheme, expected_scheme)
         self.assertIsNone(world.walls_textures)     
         
-        self.assertEqual(enemies, [Sprite(1,1,-1), Sprite(2,2,-1)])
+        self.assertEqual(enemies, [Sprite(1.5, 1.5, -1), Sprite(3.2, 3.2, -1)])
         for enemy in enemies:
             self.assertIsNone(enemy.texture)
         
@@ -130,16 +130,18 @@ class TestParse(unittest.TestCase):
         
         image = Image.open("test_resources/textures/textures.png")
         expected_pixmap_with_alpha = image.convert('RGBA')
-        expected_scheme = "0000000    00    0000000"
+        expected_scheme = "0111110    0000  00    00    0222220"
         
         world, enemies = parse(filename)
 
         self.assertEqual(world.width, 6)
-        self.assertEqual(world.height, 4)
+        self.assertEqual(world.height, 6)
         self.assertEqual(world.scheme, expected_scheme)
         self.assertIsNone(world.walls_textures)     
         
         self.assertEqual(enemies, [])
+
+    # TODO: enemy texture id without enemy texture
 
     def test_without_map(self):
         filename = "test_resources/resources/without_map.txt"

@@ -1,7 +1,9 @@
-enemies:1,1;2,2
+enemies:1.5,1.5;3.2,3.2
 walls_textures:test_resources/textures/textures.png
 map_scheme:
-000000
+011111
+0    0
+000  0
 0    0
 0    0
-000000
+222220
