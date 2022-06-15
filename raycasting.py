@@ -246,15 +246,20 @@ class ImageWidget(QWidget):
         self.update()
     
 
-def main():
+def main(line_args=None):    
     parser = argparse.ArgumentParser(description="Ray casting implemention in Python.")
     parser.add_argument("-g", "--gui", help="show gui", action="store_true")
     parser.add_argument("-m", "--map", help="show map", action="store_true")
-    parser.add_argument("-a", "--anim", help="save as gif animation", action="store_true")
+    parser.add_argument("-a", "--angle", help="Player's view angle", type=float, default=1.523)
     parser.add_argument("-f", "--frames", help="amount of frames", type=int, default=1)
     parser.add_argument("-o", "--output", help="path to output file", type=str, default="output\output")
     # set resource file
-    args = parser.parse_args()
+    if line_args:
+        args = parser.parse_args(line_args)
+    else:
+        args = parser.parse_args()
+        
+    print(args.output)
     
     name = args.output if args.output else "output/output"
 
@@ -278,7 +283,7 @@ def main():
         widget.thread.stop()
         sys.exit(code)
     else:
-        if args.anim:
+        if args.frames > 1:
             images = []
             for frame in range(args.frames):
                 logging.debug(f"Frame {frame}")
@@ -296,5 +301,5 @@ def main():
             buffer.write_to_file(name)   
         
         
-if __name__ == "__main__":
+if __name__ == "__main__":    
     main()

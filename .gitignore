@@ -1,6 +1,7 @@
 output/
 desktop.ini
 test_resources/Sprite-*
+/test_resources/temp/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

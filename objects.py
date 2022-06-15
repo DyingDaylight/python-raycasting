@@ -3,13 +3,13 @@ import math
 
 class Player:
     
-    def __init__(self, x: int, y: int) -> None:
+    def __init__(self, x: int, y: int, a: float = 1.523) -> None:
         # player's position
         self.x = x
         self.y = y
         
         # player's view direction
-        self.a = 1.523
+        self.a = a
         self.fov = math.pi / 3
         
         # playes's size
